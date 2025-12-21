@@ -1,29 +1,39 @@
+# ⚡ QuickStart — Hugging Face Repo Quickstart Kit
 
-# QuickStart is a **Gradio** app that turns any Hugging Face **URL** or **Repo ID** into reliable, copy-ready **first-run artifacts** (best-effort).
+QuickStart is a **Gradio** app that converts any Hugging Face **URL** or **Repo ID** into clean, copy-ready **first‑run artifacts** (best‑effort).
 
 [![UI](https://img.shields.io/badge/UI-Gradio-FF7A18)](https://www.gradio.app/)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![License](https://img.shields.io/badge/License-Apache--2.0-orange)
-[![Live Demo](https://img.shields.io/badge/Hugging%20Face-Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
+[![Live Space](https://img.shields.io/badge/Live-Hugging%20Face%20Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
 
+**Live demo:** https://huggingface.co/spaces/tarekmasryo/QuickStart
 
 ---
 
 ## Preview
-![QuickStart UI](assets/Example.png)
+
+![QuickStart UI](assets/example.png)
 
 ---
 
-## What you get
+## Why QuickStart?
 
-Given a repo (**Model / Dataset / Space**), QuickStart generates:
+Starting a repo can be messy (different repo types, different download flows, gated/private repos, large artifacts).
+QuickStart standardizes the **first 5 minutes** into a repeatable workflow.
 
-- **Run snippet** *(best-effort)*
+---
+
+## Features
+
+- **Type-aware**: Model / Dataset / Space (auto or manual)
+- **Run snippet** *(best‑effort)* based on Hub metadata
 - **Download recipes**
   - Python: `snapshot_download()`
   - CLI: `huggingface-cli download`
-- **Files view** + lightweight **risk hints** *(filename-based only)*
-- **Exportable zip** with a minimal runnable scaffold
+- **Files view** *(best‑effort, limited)* + quick filter
+- **Risk hints** *(filename-based only)* for suspicious patterns and common artifact types
+- **Export zip** with a minimal runnable scaffold
 
 ---
 
@@ -52,8 +62,8 @@ spaces/<owner>/<repo>
 ## Run locally
 
 ```bash
-git clone https://github.com/tarekmasryo/quickstart.git
-cd quickstart
+git clone https://github.com/tarekmasryo/QuickStart.git
+cd QuickStart
 
 python -m venv .venv
 # Windows:
@@ -69,11 +79,9 @@ python app.py
 
 ---
 
-## Authentication (private / gated repos)
+## Private / gated repos (optional)
 
-`HF_TOKEN` is **optional**. You only need it if the target repo is **private** or **gated**.
-
-**Option A — Environment variable**
+You only need `HF_TOKEN` if the target repo is **private** or **gated**.
 
 Windows (PowerShell):
 ```bash
@@ -86,20 +94,19 @@ macOS/Linux:
 export HF_TOKEN="YOUR_TOKEN"
 ```
 
-**Option B — CLI login**
+Or login once:
 ```bash
 huggingface-cli login
 ```
 
-**On Hugging Face Spaces**
+On Hugging Face Spaces:
 - Space **Settings → Secrets**
 - Add: `HF_TOKEN` = your token
 
 ---
 
-## Export output (contract)
+## Export output (zip contract)
 
-The exported zip is a minimal runnable scaffold (best-effort generated):
 ```text
 run.py
 download.py
@@ -110,23 +117,13 @@ README.md
 
 ---
 
-## Risk hints (important)
+## Risk hints (not an audit)
 
 Risk hints are **filename-based only**:
-- ✅ Flags names like: `.env`, `token`, `api_key`, `credentials`, private keys
-- ✅ Highlights common ML artifacts by extension (e.g., `.safetensors`, `.bin`, `.onnx`, `.gguf`)
-- ❌ Does **not** scan file contents
-- ❌ Not a security/compliance audit
-
-Use it as a **signal**, not a verdict.
-
----
-
-## Known limitations
-
-- Snippets are **best-effort** and depend on Hub metadata.
-- Files view is limited and may be incomplete for some repos.
-- No content scanning (by design).
+- ✅ flags `.env`, `token`, `api_key`, `credentials`, key files, etc.
+- ✅ highlights artifact extensions like `.safetensors`, `.bin`, `.onnx`, `.gguf`
+- ❌ does not scan file contents
+- ❌ not a security/compliance audit
 
 ---
 
