@@ -13,7 +13,7 @@ QuickStart is a **Gradio** app that converts any Hugging Face **URL** or **Repo 
 
 ## Preview
 
-![QuickStart UI](assets/example.png)
+![QuickStart UI](assets/Example.png)
 
 ---
 
