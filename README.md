@@ -4,14 +4,13 @@
 [![UI](https://img.shields.io/badge/UI-Gradio-FF7A18)](https://www.gradio.app/)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![License](https://img.shields.io/badge/License-Apache--2.0-orange)
-[![HF Space](https://img.shields.io/badge/Hugging%20Face-Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
+[![Live Demo](https://img.shields.io/badge/Hugging%20Face-Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
 
-**Live demo:** https://huggingface.co/spaces/tarekmasryo/QuickStart
 
 ---
 
 ## Preview
-![QuickStart UI](assets/example.png)
+![QuickStart UI](assets/Example.png)
 
 ---
 
