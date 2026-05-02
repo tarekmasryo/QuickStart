@@ -1,9 +1,9 @@
 # ⚡ QuickStart — Hugging Face Repo Quickstart Kit
 
-QuickStart is a **Gradio** app that converts any Hugging Face **URL** or **Repo ID** into clean, copy-ready **first‑run artifacts** (best‑effort).
+QuickStart is a clean **Gradio** app that turns any Hugging Face **URL** or **Repo ID** into copy-ready first-run artifacts: install commands, runnable Python snippets, download recipes, file previews, lightweight risk hints, and an exportable scaffold ZIP.
 
 [![UI](https://img.shields.io/badge/UI-Gradio-FF7A18)](https://www.gradio.app/)
-![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![License](https://img.shields.io/badge/License-Apache--2.0-orange)
 [![Live Space](https://img.shields.io/badge/Live-Hugging%20Face%20Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
 
@@ -11,47 +11,52 @@ QuickStart is a **Gradio** app that converts any Hugging Face **URL** or **Repo 
 
 ---
 
-## Preview
+## 🖼️ Preview
 
 ![QuickStart UI](assets/Example.png)
 
 ---
 
-## Why QuickStart?
+## 🎯 Why QuickStart?
 
-Starting a repo can be messy (different repo types, different download flows, gated/private repos, large artifacts).
-QuickStart standardizes the **first 5 minutes** into a repeatable workflow.
+Hugging Face repositories are not all started the same way. Models, datasets, and Spaces often require different install paths, download commands, runtime assumptions, and safety checks.
 
----
-
-## Features
-
-- **Type-aware**: Model / Dataset / Space (auto or manual)
-- **Run snippet** *(best‑effort)* based on Hub metadata
-- **Download recipes**
-  - Python: `snapshot_download()`
-  - CLI: `huggingface-cli download`
-- **Files view** *(best‑effort, limited)* + quick filter
-- **Risk hints** *(filename-based only)* for suspicious patterns and common artifact types
-- **Export zip** with a minimal runnable scaffold
+QuickStart standardizes the **first 5 minutes** of repo exploration into a repeatable workflow.
 
 ---
 
-## Supported inputs
+## ✨ Features
 
-**Repo ID**
+- 🧭 **Type-aware parsing** for models, datasets, and Spaces
+- 🔗 Accepts plain repo IDs and Hugging Face URLs
+- 🧪 Generates a **best-effort runnable Python snippet** from repo metadata
+- 📦 Generates full snapshot download code using `snapshot_download()`
+- 🖥️ Generates modern CLI download commands using `hf download`
+- 📁 Shows a limited file table with quick filtering
+- 🛡️ Flags filename-based risk hints for secrets, keys, and common model artifacts
+- 🧰 Exports a minimal scaffold ZIP with `run.py`, `download.py`, `requirements.txt`, `.env.example`, and `README.md`
+- 🔒 Keeps server-side token usage disabled by default
+
+---
+
+## ✅ Supported inputs
+
+### Repo ID
+
 ```text
 <owner>/<repo>
 ```
 
-**URLs**
+### URLs
+
 ```text
 https://huggingface.co/<owner>/<repo>
 https://huggingface.co/datasets/<owner>/<repo>
 https://huggingface.co/spaces/<owner>/<repo>
 ```
 
-Also accepted:
+### Short typed paths
+
 ```text
 datasets/<owner>/<repo>
 spaces/<owner>/<repo>
@@ -59,53 +64,66 @@ spaces/<owner>/<repo>
 
 ---
 
-## Run locally
+## 🚀 Run locally
 
 ```bash
 git clone https://github.com/tarekmasryo/QuickStart.git
 cd QuickStart
 
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS/Linux
 source .venv/bin/activate
 
-pip install -U pip
-pip install -r requirements.txt
-
+python -m pip install -r requirements.txt
 python app.py
 ```
 
 ---
 
-## Private / gated repos (optional)
+## 🔐 Private / gated repos
 
-You only need `HF_TOKEN` if the target repo is **private** or **gated**.
+Public repos work without a token.
 
-Windows (PowerShell):
+For private or gated repos, use a Hugging Face token locally:
+
 ```bash
+# macOS/Linux
+export HF_TOKEN="YOUR_TOKEN"
+
+# Windows PowerShell
 setx HF_TOKEN "YOUR_TOKEN"
 ```
-Restart the terminal.
 
-macOS/Linux:
+Then restart the terminal.
+
+### Optional server token mode
+
+Server-side token usage is disabled unless explicitly enabled:
+
 ```bash
-export HF_TOKEN="YOUR_TOKEN"
+ALLOW_SERVER_TOKEN=1
+HF_TOKEN=YOUR_TOKEN
+TOKEN_ALLOWED_OWNERS=owner1,owner2
 ```
 
-Or login once:
-```bash
-huggingface-cli login
-```
+`TOKEN_ALLOWED_OWNERS` is recommended when deploying a public Space, because it limits which repo owners can use the server token.
 
 On Hugging Face Spaces:
-- Space **Settings → Secrets**
-- Add: `HF_TOKEN` = your token
+
+1. Open **Space Settings → Secrets**
+2. Add `HF_TOKEN`
+3. Add `ALLOW_SERVER_TOKEN=1` only if you intentionally want server-token access
+4. Add `TOKEN_ALLOWED_OWNERS` for safer scoping
 
 ---
 
-## Export output (zip contract)
+## 📦 Export ZIP contract
+
+The exported ZIP contains:
 
 ```text
 run.py
@@ -115,19 +133,70 @@ requirements.txt
 README.md
 ```
 
----
-
-## Risk hints (not an audit)
-
-Risk hints are **filename-based only**:
-- ✅ flags `.env`, `token`, `api_key`, `credentials`, key files, etc.
-- ✅ highlights artifact extensions like `.safetensors`, `.bin`, `.onnx`, `.gguf`
-- ❌ does not scan file contents
-- ❌ not a security/compliance audit
+The scaffold is intentionally small. It is a first-run starter, not a full production project generator.
 
 ---
 
-## License
+## 🛡️ Risk hints — important limitation
+
+QuickStart provides **filename-based hints only**.
+
+It can flag names such as:
+
+- `.env`
+- `token`
+- `api_key`
+- `credentials`
+- `.pem`
+- `.p12`
+- `id_rsa`
+- large model artifacts such as `.gguf`, `.onnx`, `.safetensors`, and `.bin`
+
+It does **not** scan file contents, validate licenses, inspect model behavior, or perform a security/compliance audit.
+
+---
+
+## 🧱 Project structure
+
+```text
+.
+├── app.py                  # Gradio UI
+├── quickstart_core.py       # Parsing, metadata, snippet generation, export logic
+├── assets/
+│   └── Example.png
+├── tests/
+│   └── test_quickstart_core.py
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
+├── .env.example
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+---
+
+## 🧪 Development checks
+
+```bash
+python -m pip install -r requirements.txt -r requirements-dev.txt
+ruff check .
+pytest -q
+```
+
+---
+
+## 📌 Notes
+
+- Generated snippets are **best-effort** and depend on Hub metadata.
+- Some repositories need extra files, custom code, hardware, or manual setup.
+- Large models may require GPU/VRAM or selective downloads.
+- Gated/private repositories require proper access permissions.
+
+---
+
+## 📄 License
 
 Apache-2.0
 
