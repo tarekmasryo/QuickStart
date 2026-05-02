@@ -198,6 +198,6 @@ pytest -q
 
 ## 📄 License
 
-Apache-2.0
+Apache License 2.0. See [LICENSE](LICENSE).
 
 **Author:** Tarek Masryo
