@@ -22,7 +22,13 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Lint
-        run: ruff check .
+        run: python -m ruff check .
+
+      - name: Format check
+        run: python -m ruff format --check .
+
+      - name: Compile
+        run: python -m compileall .
 
       - name: Test
-        run: pytest -q
+        run: python -m pytest -q

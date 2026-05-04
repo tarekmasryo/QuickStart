@@ -61,20 +61,20 @@ def status_card(meta_public: dict[str, Any], warnings: list[str], repo_type: str
     return f"""
     <div class="card ok">
       <div class="head">
-        <div class="title">{esc(meta_public.get('Repo ID', repo_id))}</div>
+        <div class="title">{esc(meta_public.get("Repo ID", repo_id))}</div>
         <a class="link" href="{esc(url)}" target="_blank">Open</a>
       </div>
 
-      <div class="pills">{''.join(pills)}</div>
+      <div class="pills">{"".join(pills)}</div>
 
       <div class="stats">
         <div class="stat accent">
           <div class="k">Likes</div>
-          <div class="v">{esc(meta_public.get('Likes', 0))}</div>
+          <div class="v">{esc(meta_public.get("Likes", 0))}</div>
         </div>
         <div class="stat">
           <div class="k">Downloads</div>
-          <div class="v">{esc(meta_public.get('Downloads', 0))}</div>
+          <div class="v">{esc(meta_public.get("Downloads", 0))}</div>
         </div>
         <div class="stat">
           <div class="k">Last modified</div>
@@ -82,7 +82,7 @@ def status_card(meta_public: dict[str, Any], warnings: list[str], repo_type: str
         </div>
         <div class="stat">
           <div class="k">Author</div>
-          <div class="v">{esc(meta_public.get('Author', 'N/A'))}</div>
+          <div class="v">{esc(meta_public.get("Author", "N/A"))}</div>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ def status_error_card(message: str) -> str:
       <div class="title">Failed</div>
       <div class="msg">{esc(message)}</div>
       <div class="hint">
-        If this is a private/gated repo, provide a token locally or enable a server token for trusted use.
+        If this is a private/gated repo, enable a scoped server token locally or in Space settings.
       </div>
     </div>
     """
@@ -132,7 +132,7 @@ def render_risk_html(risk: dict[str, Any]) -> str:
     <div class="card">
       <div class="title">Files and risk</div>
       <div class="mini_stats">
-        <span>Files <b>{esc(risk.get('files_count', 0))}</b></span>
+        <span>Files <b>{esc(risk.get("files_count", 0))}</b></span>
         <span>Size <b>{esc(size_text)}</b></span>
         <span>Artifacts <b>{esc(artifacts_text)}</b></span>
       </div>
@@ -404,7 +404,9 @@ def build_ui():
                 risk_html = gr.HTML(label="Risk")
 
             with gr.TabItem("Export"):
-                gr.Markdown("Exports a zip: `run.py`, `download.py`, `requirements.txt`, `.env.example`, `README.md`.")
+                gr.Markdown(
+                    "Exports a zip: `run.py`, `download.py`, `requirements.txt`, `.env.example`, `README.md`."
+                )
                 zip_button = gr.Button("Build Zip", variant="primary")
                 zip_file = gr.File(label="Zip file")
                 zip_message = gr.Markdown()

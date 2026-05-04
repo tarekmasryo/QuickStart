@@ -9,7 +9,6 @@ import re
 import tempfile
 import textwrap
 import zipfile
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +16,7 @@ from huggingface_hub import HfApi
 from huggingface_hub.utils import HfHubHTTPError
 
 VALID_REPO_TYPES = {"model", "dataset", "space"}
-RE_REPO_ID = re.compile(
-    r"^(?!.*(?:--|\.\.))[A-Za-z0-9][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$"
-)
+RE_REPO_SEGMENT = re.compile(r"^(?!.*(?:--|\.\.))[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$")
 SENSITIVE_FILENAME_PATTERNS = [
     r"(^|/)\.env$",
     r"secrets?",
@@ -49,9 +46,14 @@ def norm_id(value: str | None) -> str:
 
 def is_valid_repo_id(repo_id: str) -> bool:
     repo_id = (repo_id or "").strip()
-    if not RE_REPO_ID.match(repo_id):
+    parts = repo_id.split("/")
+    if len(parts) not in {1, 2}:
         return False
-    return all(not part.startswith(("-", ".")) and not part.endswith(("-", ".")) for part in repo_id.split("/"))
+
+    return all(
+        RE_REPO_SEGMENT.match(part) and not part.startswith(("-", ".")) and not part.endswith(("-", "."))
+        for part in parts
+    )
 
 
 def human_bytes(num_bytes: int | None) -> str:
@@ -81,14 +83,14 @@ def parse_hf_input(user_input: str) -> tuple[str, str]:
     if not value:
         return "model", ""
 
-    if "huggingface.co" in value:
-        scoped_match = re.search(r"huggingface\.co/(datasets|spaces)/([^?#]+)", value)
+    if "huggingface.co" in value or "hf.co" in value:
+        scoped_match = re.search(r"(?:huggingface\.co|hf\.co)/(datasets|spaces)/([^?#]+)", value)
         if scoped_match:
             repo_type = "dataset" if scoped_match.group(1) == "datasets" else "space"
             repo_id = _strip_hf_file_path(scoped_match.group(2))
             return repo_type, repo_id
 
-        model_match = re.search(r"huggingface\.co/([^?#]+)", value)
+        model_match = re.search(r"(?:huggingface\.co|hf\.co)/([^?#]+)", value)
         if model_match:
             repo_id = _strip_hf_file_path(model_match.group(1))
             return "model", repo_id
@@ -103,7 +105,7 @@ def parse_hf_input(user_input: str) -> tuple[str, str]:
 
 def _strip_hf_file_path(path: str) -> str:
     path = (path or "").strip("/")
-    path = re.split(r"/(tree|blob|resolve|raw)/", path)[0].strip("/")
+    path = re.split(r"/(tree|blob|resolve|raw|viewer|discussions)/", path)[0].strip("/")
     return path
 
 
@@ -186,10 +188,14 @@ def warnings_from_meta(meta: dict[str, Any]) -> list[str]:
         warnings.append("Large repo size detected (>8GB). Prefer selective download when possible.")
 
     if risk.get("has_gguf"):
-        warnings.append("GGUF detected. Use a llama.cpp / llama-cpp-python flow instead of generic Transformers.")
+        warnings.append(
+            "GGUF detected. Use a llama.cpp / llama-cpp-python flow instead of generic Transformers."
+        )
 
     if risk.get("suspicious_names"):
-        warnings.append("Potentially sensitive filenames detected. This is filename-based only; review before use.")
+        warnings.append(
+            "Potentially sensitive filenames detected. This is filename-based only; review before use."
+        )
 
     if meta.get("Pipeline") == "text-generation":
         warnings.append("Text-generation models can be slow without adequate GPU/VRAM.")
@@ -288,7 +294,7 @@ def generate_quickstart(repo_type: str, repo_id: str, meta: dict[str, Any]) -> s
                 import os
                 import subprocess
 
-                subprocess.check_call(["git", "clone", "{hf_url('space', repo_id)}"])
+                subprocess.check_call(["git", "clone", "{hf_url("space", repo_id)}"])
                 os.chdir("{repo_dir}")
                 subprocess.check_call(["python", "-m", "pip", "install", "-r", "requirements.txt"])
                 subprocess.check_call(["streamlit", "run", "app.py"])
@@ -300,7 +306,7 @@ def generate_quickstart(repo_type: str, repo_id: str, meta: dict[str, Any]) -> s
             import os
             import subprocess
 
-            subprocess.check_call(["git", "clone", "{hf_url('space', repo_id)}"])
+            subprocess.check_call(["git", "clone", "{hf_url("space", repo_id)}"])
             os.chdir("{repo_dir}")
             subprocess.check_call(["python", "-m", "pip", "install", "-r", "requirements.txt"])
             subprocess.check_call(["python", "app.py"])
@@ -409,13 +415,21 @@ def generate_badge(repo_type: str, repo_id: str) -> str:
     repo_id = norm_id(repo_id)
     url = hf_url(repo_type, repo_id)
     encoded = repo_id.replace("/", "%2F")
-    return f"[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-{encoded}-blue)]({url})"
+    return (
+        f"[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-{encoded}-blue)]({url})"
+    )
 
 
 def token_allowed_for_repo(repo_id: str) -> bool:
+    """Return whether the configured server token may be used for this repo.
+
+    Server-token mode is intentionally fail-closed: enabling ALLOW_SERVER_TOKEN
+    is not enough on its own. TOKEN_ALLOWED_OWNERS must also scope the token to
+    trusted Hugging Face owners.
+    """
     owners = os.getenv("TOKEN_ALLOWED_OWNERS", "").strip()
     if not owners:
-        return True
+        return False
 
     allowed_owners = {owner.strip().lower() for owner in owners.split(",") if owner.strip()}
     owner = (norm_id(repo_id).split("/")[0] if "/" in norm_id(repo_id) else "").lower()
@@ -444,7 +458,7 @@ def fetch_repo_info(
     if not repo_id:
         return False, None, "Empty Repo ID."
     if not is_valid_repo_id(repo_id):
-        return False, None, "Invalid Repo ID. Expected: owner/name"
+        return False, None, "Invalid Repo ID. Expected: repo-name or owner/name"
 
     try:
         if repo_type == "dataset":
@@ -512,9 +526,22 @@ def fetch_repo_info(
         return False, None, f"Unexpected Error: {safe_str(error, 500)}"
 
 
-@lru_cache(maxsize=512)
+_PUBLIC_CACHE: dict[tuple[str, str], tuple[bool, dict[str, Any] | None, str | None]] = {}
+
+
 def cached_public(repo_type: str, repo_id: str) -> tuple[bool, dict[str, Any] | None, str | None]:
-    return fetch_repo_info(repo_type, repo_id, token=None)
+    """Fetch public repo metadata and cache successful responses only.
+
+    Transient network errors should not become sticky until process restart.
+    """
+    key = (norm_type(repo_type), norm_id(repo_id))
+    if key in _PUBLIC_CACHE:
+        return _PUBLIC_CACHE[key]
+
+    result = fetch_repo_info(key[0], key[1], token=None)
+    if result[0]:
+        _PUBLIC_CACHE[key] = result
+    return result
 
 
 def build_export_files(state: dict[str, Any]) -> dict[str, str]:
@@ -565,7 +592,7 @@ def build_export_files(state: dict[str, Any]) -> dict[str, str]:
     run_py = "\n".join(
         [
             "def main():",
-            "    print(\"Install/reference command:\")",
+            '    print("Install/reference command:")',
             f"    print({install!r})",
             "",
             textwrap.indent(quickstart, "    "),

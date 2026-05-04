@@ -1,10 +1,11 @@
 # ⚡ QuickStart — Hugging Face Repo Quickstart Kit
 
-QuickStart is a clean **Gradio** app that turns any Hugging Face **URL** or **Repo ID** into copy-ready first-run artifacts: install commands, runnable Python snippets, download recipes, file previews, lightweight risk hints, and an exportable scaffold ZIP.
+QuickStart is a clean **Gradio** app that turns Hugging Face **repo URLs** or **Repo IDs** into copy-ready first-run artifacts: install commands, runnable Python snippets, download recipes, file previews, lightweight risk hints, and an exportable scaffold ZIP.
 
 [![UI](https://img.shields.io/badge/UI-Gradio-FF7A18)](https://www.gradio.app/)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![License](https://img.shields.io/badge/License-Apache--2.0-orange)
+[![CI](https://github.com/tarekmasryo/QuickStart/actions/workflows/ci.yml/badge.svg)](https://github.com/tarekmasryo/QuickStart/actions/workflows/ci.yml)
 [![Live Space](https://img.shields.io/badge/Live-Hugging%20Face%20Space-yellow)](https://huggingface.co/spaces/tarekmasryo/QuickStart)
 
 **Live demo:** https://huggingface.co/spaces/tarekmasryo/QuickStart
@@ -28,7 +29,7 @@ QuickStart standardizes the **first 5 minutes** of repo exploration into a repea
 ## ✨ Features
 
 - 🧭 **Type-aware parsing** for models, datasets, and Spaces
-- 🔗 Accepts plain repo IDs and Hugging Face URLs
+- 🔗 Accepts plain repo IDs and Hugging Face repo URLs
 - 🧪 Generates a **best-effort runnable Python snippet** from repo metadata
 - 📦 Generates full snapshot download code using `snapshot_download()`
 - 🖥️ Generates modern CLI download commands using `hf download`
@@ -44,14 +45,21 @@ QuickStart standardizes the **first 5 minutes** of repo exploration into a repea
 ### Repo ID
 
 ```text
+<repo>
 <owner>/<repo>
 ```
 
 ### URLs
 
 ```text
+https://huggingface.co/<repo>
 https://huggingface.co/<owner>/<repo>
+https://hf.co/<owner>/<repo>
+https://huggingface.co/<owner>/<repo>/tree/main
+https://huggingface.co/<owner>/<repo>/blob/main/file.py
+https://huggingface.co/<owner>/<repo>/discussions/1
 https://huggingface.co/datasets/<owner>/<repo>
+https://huggingface.co/datasets/<owner>/<repo>/viewer/default/train
 https://huggingface.co/spaces/<owner>/<repo>
 ```
 
@@ -88,21 +96,7 @@ python app.py
 
 Public repos work without a token.
 
-For private or gated repos, use a Hugging Face token locally:
-
-```bash
-# macOS/Linux
-export HF_TOKEN="YOUR_TOKEN"
-
-# Windows PowerShell
-setx HF_TOKEN "YOUR_TOKEN"
-```
-
-Then restart the terminal.
-
-### Optional server token mode
-
-Server-side token usage is disabled unless explicitly enabled:
+Private or gated repos require an explicitly enabled, owner-scoped server token:
 
 ```bash
 ALLOW_SERVER_TOKEN=1
@@ -110,7 +104,7 @@ HF_TOKEN=YOUR_TOKEN
 TOKEN_ALLOWED_OWNERS=owner1,owner2
 ```
 
-`TOKEN_ALLOWED_OWNERS` is recommended when deploying a public Space, because it limits which repo owners can use the server token.
+`TOKEN_ALLOWED_OWNERS` is required when server-token mode is enabled. This fail-closed behavior prevents an accidentally enabled token from being used against arbitrary repos.
 
 On Hugging Face Spaces:
 
@@ -181,8 +175,10 @@ It does **not** scan file contents, validate licenses, inspect model behavior, o
 
 ```bash
 python -m pip install -r requirements.txt -r requirements-dev.txt
-ruff check .
-pytest -q
+python -m ruff check .
+python -m ruff format --check .
+python -m compileall .
+python -m pytest -q
 ```
 
 ---

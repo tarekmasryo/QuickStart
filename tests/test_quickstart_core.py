@@ -5,10 +5,12 @@ import pytest
 
 from quickstart_core import (
     build_export_files,
+    cached_public,
     compute_requirements,
     generate_cli_download,
     generate_quickstart,
     generate_snapshot_download,
+    get_effective_token,
     is_valid_repo_id,
     parse_hf_input,
 )
@@ -18,11 +20,16 @@ from quickstart_core import (
     "value,expected",
     [
         ("owner/repo", ("model", "owner/repo")),
+        ("bert-base-uncased", ("model", "bert-base-uncased")),
         ("datasets/owner/repo", ("dataset", "owner/repo")),
+        ("datasets/squad", ("dataset", "squad")),
         ("spaces/owner/repo", ("space", "owner/repo")),
         ("https://huggingface.co/owner/repo", ("model", "owner/repo")),
+        ("https://hf.co/owner/repo", ("model", "owner/repo")),
         ("https://huggingface.co/datasets/owner/repo/blob/main/data.csv", ("dataset", "owner/repo")),
         ("https://huggingface.co/spaces/owner/repo/tree/main", ("space", "owner/repo")),
+        ("https://huggingface.co/datasets/squad/viewer/plain_text/train", ("dataset", "squad")),
+        ("https://huggingface.co/owner/repo/discussions/1", ("model", "owner/repo")),
     ],
 )
 def test_parse_hf_input(value, expected):
@@ -31,7 +38,7 @@ def test_parse_hf_input(value, expected):
 
 @pytest.mark.parametrize(
     "repo_id",
-    ["owner/repo", "org-name/model.name", "user_1/repo_2"],
+    ["owner/repo", "org-name/model.name", "user_1/repo_2", "bert-base-uncased", "squad"],
 )
 def test_valid_repo_ids(repo_id):
     assert is_valid_repo_id(repo_id)
@@ -39,7 +46,7 @@ def test_valid_repo_ids(repo_id):
 
 @pytest.mark.parametrize(
     "repo_id",
-    ["", "owner", "/owner/repo", "owner/repo/extra", "owner/..repo", "owner/repo--bad", "owner/.repo"],
+    ["", "/owner/repo", "owner/repo/extra", "owner/..repo", "owner/repo--bad", "owner/.repo"],
 )
 def test_invalid_repo_ids(repo_id):
     assert not is_valid_repo_id(repo_id)
@@ -97,4 +104,45 @@ def test_export_zip_contract(tmp_path, monkeypatch):
     assert zip_path is not None
     assert "Zip built" in message
     with zipfile.ZipFile(zip_path) as archive:
-        assert set(archive.namelist()) == {"README.md", "requirements.txt", ".env.example", "run.py", "download.py"}
+        assert set(archive.namelist()) == {
+            "README.md",
+            "requirements.txt",
+            ".env.example",
+            "run.py",
+            "download.py",
+        }
+
+
+def test_server_token_requires_allowed_owner(monkeypatch):
+    monkeypatch.setenv("ALLOW_SERVER_TOKEN", "1")
+    monkeypatch.setenv("HF_TOKEN", "secret-token")
+    monkeypatch.delenv("TOKEN_ALLOWED_OWNERS", raising=False)
+
+    assert get_effective_token("owner/repo") is None
+
+    monkeypatch.setenv("TOKEN_ALLOWED_OWNERS", "owner")
+    assert get_effective_token("owner/repo") == "secret-token"
+
+
+def test_cached_public_only_caches_success(monkeypatch):
+    import quickstart_core
+
+    calls = {"count": 0}
+
+    def fake_fetch(repo_type, repo_id, token):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return False, None, "temporary error"
+        return True, {"Repo ID": repo_id, "Type": repo_type}, None
+
+    quickstart_core._PUBLIC_CACHE.clear()
+    monkeypatch.setattr(quickstart_core, "fetch_repo_info", fake_fetch)
+
+    first = cached_public("model", "owner/repo")
+    second = cached_public("model", "owner/repo")
+    third = cached_public("model", "owner/repo")
+
+    assert first[0] is False
+    assert second[0] is True
+    assert third[0] is True
+    assert calls["count"] == 2
